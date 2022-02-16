@@ -12,7 +12,7 @@
 ### httppost
 `python3 httppost.py --url http://blogtest.vnprogramming.com/ --username tuandv --password test123QWE@AD` <-- test user khong ton tai
 
-`python3 httppost.py --url http://blogtest.vnprogramming.com/ --username test --password test123QWE@AD` <--test user ton tai
+`python3 httppost.py --url http://blogtest.vnprogramming.com/ --user test --password test123QWE@AD` <--test user ton tai
 
 ### httpupload
 `python3 httpupload.py --url http://blogtest.vnprogramming.com/ --username test --password test123QWE@AD --localfile /images/test.jpg`
