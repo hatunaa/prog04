@@ -11,23 +11,16 @@ args = parser.parse_args()
 HOST = args.target_host
 PORT = 80
 
-def recvall(s):
-    total_data = []
-    response = s.recv(4096)
-    while (len(response) > 0):
-        total_data.append(response.decode())
-        response = s.recv(4096)
-    response = ''.join(total_data)
-    return response
 
 def recv_basic(the_socket):
     total_data=[]
-    while True:
+    data = the_socket.recv(8192)
+    while (len(data) > 0):
+        # if not data: break
+        total_data.append(data.decode())
         data = the_socket.recv(8192)
-        if not data: break
-        total_data.append(data)
-        reponse = b''.join(total_data)
-    return reponse
+    data = ''.join(total_data)
+    return data
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
     domain = urlparse(f'{HOST}').netloc
@@ -39,7 +32,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
     request = (f'GET / HTTP/1.1\r\nHost: {domain}\r\n\r\n')
 
     client.send(request.encode())
-    response = recvall(client)
+    response = recv_basic(client)
     # print(response)
 
     title = re.findall(r"<title>(.*)</title>", response)[0]
