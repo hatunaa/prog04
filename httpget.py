@@ -1,11 +1,15 @@
-import socket
-import sys
-import html
-import argparse
+#!/usr/bin/env python3
+
+import socket 
+import argparse, re
+from urllib.parse import urlparse
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--url", help="Target url")
+parser.add_argument("--url",dest="target_host", help="url argument")
 args = parser.parse_args()
 
+HOST = args.target_host
+PORT = 80
 
 def recvall(s):
     total_data = []
@@ -16,40 +20,27 @@ def recvall(s):
     response = ''.join(total_data)
     return response
 
+def recv_basic(the_socket):
+    total_data=[]
+    while True:
+        data = the_socket.recv(8192)
+        if not data: break
+        total_data.append(data)
+        reponse = b''.join(total_data)
+    return reponse
 
-def getDomain(url):
-    domain = ""
-    if url[0:8] == "https://":
-        for i in range(8, len(url)):
-            if url[i] == '/':
-                break
-            domain += url[i]
-    if url[0:7] == "http://":
-        for i in range(7, len(url)):
-            if url[i] == '/':
-                break
-            domain += url[i]
-    return domain
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+    domain = urlparse(f'{HOST}').netloc
+    #print(domain)
 
+    # socket connect
+    client.connect((domain,PORT))
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-url = args.url
-domain = getDomain(url)
-# print(domain)
-client.connect((domain, 80))
-request = "GET / HTTP/1.1\r\nHOST: "+domain+"\r\n\r\n"
-client.send(request.encode())
-response = recvall(client)
-# print(response)
-title = ""
-for i in range(0, len(response)):
-    if title != "":
-        break
-    if response[i:i+7] == "<title>":
-        # print("yes")
-        for j in range(i+7, len(response)):
-            if response[j:j+8] == "</title>":
-                title = response[i+7:j]
-                break
-#print("title", title)
-print("title:", html.unescape(title))
+    request = (f'GET / HTTP/1.1\r\nHost: {domain}\r\n\r\n')
+
+    client.send(request.encode())
+    response = recvall(client)
+    # print(response)
+
+    title = re.findall(r"<title>(.*)</title>", response)[0]
+    print("Title: ", title[0:10])
