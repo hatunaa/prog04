@@ -1,53 +1,55 @@
-import socket
-import sys
-import argparse
+#!/usr/bin/env python3
+
+import socket 
+import argparse, re
+from urllib.parse import urlparse
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--url", help="Target url")
-parser.add_argument("--username", help="Username")
-parser.add_argument("--password", help="Password")
+parser.add_argument("--url",dest="target_host", help="url target login")
+parser.add_argument("--user",dest="username", help="user for login")
+parser.add_argument("--password",dest="passwd", help="password for login")
+parser.usage = parser.format_help()
 args = parser.parse_args()
 
+HOST = args.target_host
+PORT = 80
+user = args.username
+password = args.passwd
 
-def recvall(s):
-    total_data = []
-    response = s.recv(4096)
-    while (len(response) > 0):
-        total_data.append(response.decode())
-        response = s.recv(4096)
-    response = ''.join(total_data)
-    return response
+def recv_basic(the_socket):
+    total_data=[]
+    data = the_socket.recv(8192)
+    while (len(data) > 0):
+        # if not data: break
+        total_data.append(data.decode())
+        data = the_socket.recv(8192)
+    data = ''.join(total_data)
+    return data
 
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+    domain = urlparse(f'{HOST}').netloc
+    #print(domain)
 
-def getDomain(url):
-    domain = ""
-    if url[0:8] == "https://":
-        for i in range(8, len(url)):
-            if url[i] == '/':
-                break
-            domain += url[i]
-    if url[0:7] == "http://":
-        for i in range(7, len(url)):
-            if url[i] == '/':
-                break
-            domain += url[i]
-    return domain
+    # socket connect
+    client.connect((domain,PORT))
+    cookieList = ["wordpress_test_cookie=WP+Cookie+check"]
+    
+    body = f'log={user}&pwd={password}&wp-submit=Log+In'
+    request = ( f'POST /wp-login.php HTTP/1.1\r\n'
+                f'Host: {domain}\r\n'
+                f'Content-Type: application/x-www-form-urlencoded\r\n'
+                f'Accept: text/html,application/xhtml+xml,application/xml\r\n'
+                f'Content-Length: {len(body)}\r\n'
+                f'Connection: keep-alive\r\n\r\n'
+                f'{body}\r\n'
+    )
 
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-url = args.url
-username = args.username
-password = args.password
-domain = getDomain(url)
-# print(domain)
-client.connect((domain, 80))
-body = "log="+username+"&pwd="+password+"&wp-submit=Log+In"
-request = "POST /wp-login.php HTTP/1.1\r\n"+"HOST: "+domain + "\r\n"+"Content-Length: "+str(len(body))+"\r\n"+"Content-Type: application/x-www-form-urlencoded"+"\r\n"+"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"+"\r\n"+"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"+"\r\n" + "Cookie: wordpress_test_cookie=WP Cookie check; wp_lang=en_US"+"\r\n" \
-    "\r\n"+body
-# print(request)
-client.send(request.encode())
-response = recvall(client)
-# print(response)
-if "HTTP/1.1 302 Found" in response and "is incorrect" not in response and "is not registered on this site" not in response:
-    print("User "+username+" dang nhap thanh cong.")
-else:
-    print("User "+username+" dang nhap that bai.")
+    client.send(request.encode())
+    response = recv_basic(client)
+    #print (response)
+    
+    cookie_response = re.findall(r"Set-Cookie: (wordpress_logged_in_.*?)\r\n", response)
+    if cookie_response:
+        print(f"User {user} đăng nhập thành công ")
+    else:
+        print(f"User {user} đăng nhập thất bại")
