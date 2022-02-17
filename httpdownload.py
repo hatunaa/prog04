@@ -40,14 +40,14 @@ response = recv_basic(client)
 if b"HTTP/1.1 200 OK" in response:
     len_file = re.findall(b"Content-Length: ([0-9]+)\r\n", response)[0].decode()
     print("Kích thước file: " + len_file + " bytes")
+
+    reply = b''
+    headers =  reply.split(b'\r\n\r\n')[0]
+    image = reply[len(headers)+4:]
+    file_name = remote_file.split("/")[-1]
+    f = open(f"images/{file_name}", "wb")
+    f.write(image)
+    f.close()
 else:
     print("Không tồn tại file ảnh.")
     exit()
-
-#save file
-# reply = b''
-# headers =  reply.split(b'\r\n\r\n')[0]
-# image = reply[len(headers)+4:]
-# f = open('images/test.jpg', 'wb')
-# f.write(image)
-# f.close()
