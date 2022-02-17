@@ -15,7 +15,7 @@
 `python3 httppost.py --url http://blogtest.vnprogramming.com/ --user test --password test123QWE@AD` <--test user ton tai
 
 ### httpupload
-`python3 httpupload.py --url http://blogtest.vnprogramming.com/ --username test --password test123QWE@AD --localfile /images/test.jpg`
+`python3 httpupload.py --url http://blogtest.vnprogramming.com/ --user test --password test123QWE@AD --localfile /images/test.jpg`
 
 ### httppdownload
 `python3 httpdownload.py --url http://blogtest.vnprogramming.com/ --remotefile /wp-content/uploads/2022/02/test.jpg`
